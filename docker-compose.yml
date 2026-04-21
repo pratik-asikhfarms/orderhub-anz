@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: orderhub_nz_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: orderhub_user
+      POSTGRES_PASSWORD: orderhub_pass
+      POSTGRES_DB: orderhub_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - orderhub_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  orderhub_postgres_data:
