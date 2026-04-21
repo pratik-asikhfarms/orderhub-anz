@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from "react";
 
 const CartContext = createContext(null);
 
@@ -6,31 +6,35 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
   const addToCart = (product, variant, quantity = 1) => {
-    const existingItemIndex = cartItems.findIndex(
-      (item) => item.variantId === variant.id
-    );
+    setCartItems((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) => item.variantId === variant.id
+      );
 
-    if (existingItemIndex !== -1) {
-      const updatedItems = [...cartItems];
-      updatedItems[existingItemIndex].quantity += quantity;
-      setCartItems(updatedItems);
-      return;
-    }
+      if (existingIndex !== -1) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + quantity,
+        };
+        return updated;
+      }
 
-    setCartItems((prev) => [
-      ...prev,
-      {
-        productId: product.id,
-        productName: product.name,
-        imageUrl: product.imageUrl || '',
-        variantId: variant.id,
-        variantName: variant.name,
-        sku: variant.sku,
-        price: Number(variant.price),
-        currency: variant.currency,
-        quantity,
-      },
-    ]);
+      return [
+        ...prev,
+        {
+          productId: product.id,
+          productName: product.name,
+          imageUrl: product.imageUrl || "",
+          variantId: variant.id,
+          variantName: variant.name,
+          sku: variant.sku,
+          price: Number(variant.price),
+          currency: variant.currency,
+          quantity,
+        },
+      ];
+    });
   };
 
   const updateCartItemQuantity = (variantId, quantity) => {
@@ -54,6 +58,14 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
+  const isVariantInCart = (variantId) => {
+    return cartItems.some((item) => item.variantId === variantId);
+  };
+
+  const getCartItemByVariantId = (variantId) => {
+    return cartItems.find((item) => item.variantId === variantId);
+  };
+
   const cartSummary = useMemo(() => {
     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     const totalAmount = cartItems.reduce(
@@ -61,7 +73,10 @@ export const CartProvider = ({ children }) => {
       0
     );
 
-    return { totalItems, totalAmount };
+    return {
+      totalItems,
+      totalAmount,
+    };
   }, [cartItems]);
 
   return (
@@ -72,6 +87,8 @@ export const CartProvider = ({ children }) => {
         updateCartItemQuantity,
         removeFromCart,
         clearCart,
+        isVariantInCart,
+        getCartItemByVariantId,
         cartSummary,
       }}
     >
@@ -84,7 +101,7 @@ export const useCart = () => {
   const context = useContext(CartContext);
 
   if (!context) {
-    throw new Error('useCart must be used inside CartProvider');
+    throw new Error("useCart must be used within CartProvider");
   }
 
   return context;

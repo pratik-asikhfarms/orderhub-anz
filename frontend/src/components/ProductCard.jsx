@@ -1,67 +1,94 @@
-import { useState } from 'react';
-import { useCart } from '../context/CartContext';
+import { useMemo, useState } from "react";
+import { ShoppingCart, Trash2, Check } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/context/CartContext";
 
 function ProductCard({ product }) {
-  const { addToCart } = useCart();
-  const [selectedVariantId, setSelectedVariantId] = useState(
-    product.variants?.[0]?.id || ''
-  );
+  const { addToCart, removeFromCart, isVariantInCart } = useCart();
 
-  const selectedVariant = product.variants?.find(
-    (variant) => variant.id === Number(selectedVariantId)
-  );
+  const defaultVariantId = product.variants?.[0]?.id?.toString() || "";
+  const [selectedVariantId, setSelectedVariantId] = useState(defaultVariantId);
 
-  const handleAddToCart = () => {
-    if (!selectedVariant) return;
-    addToCart(product, selectedVariant, 1);
-  };
+  const selectedVariant = useMemo(() => {
+    return product.variants?.find(
+      (v) => v.id.toString() === selectedVariantId
+    );
+  }, [product.variants, selectedVariantId]);
+
+  const isAdded = selectedVariant
+    ? isVariantInCart(selectedVariant.id)
+    : false;
 
   return (
-    <div
-      style={{
-        border: '1px solid #ddd',
-        borderRadius: '12px',
-        padding: '16px',
-        background: '#fff',
-      }}
-    >
-      <img
-        src={product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
-        alt={product.name}
-        style={{
-          width: '100%',
-          height: '220px',
-          objectFit: 'cover',
-          borderRadius: '8px',
-          marginBottom: '12px',
-        }}
-      />
+    <Card className="mx-auto w-full max-w-[240px] overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
 
-      <h3>{product.name}</h3>
-      <p>{product.description}</p>
+      {/* Image */}
+      <div className="relative h-40 w-full overflow-hidden">
+        <img
+          src={
+            product.imageUrl ||
+            "https://via.placeholder.com/800x600?text=No+Image"
+          }
+          alt={product.name}
+          className="h-full w-full object-cover"
+        />
 
-      {product.variants?.length > 0 ? (
-        <>
-          <select
-            value={selectedVariantId}
-            onChange={(e) => setSelectedVariantId(e.target.value)}
-            style={{ width: '100%', padding: '10px', marginBottom: '12px' }}
+        <Badge className="absolute right-2 top-2 text-xs bg-green-100 text-green-700">
+          Pre-order
+        </Badge>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 space-y-2">
+
+        {/* Product Name */}
+        <h3 className="text-sm font-semibold text-slate-900">
+          {product.name}
+        </h3>
+
+        {/* Variant Dropdown */}
+        <select
+          value={selectedVariantId}
+          onChange={(e) => setSelectedVariantId(e.target.value)}
+          className="h-8 w-full rounded-md border border-black/10 px-2 text-xs outline-none focus:border-emerald-600"
+        >
+          {product.variants.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name} — {v.currency} {v.price}
+            </option>
+          ))}
+        </select>
+
+        {/* Price */}
+        {selectedVariant && (
+          <p className="text-sm font-semibold text-slate-900">
+            {selectedVariant.currency} {selectedVariant.price}
+          </p>
+        )}
+
+        {/* Button */}
+        {isAdded ? (
+          <Button
+            onClick={() => removeFromCart(selectedVariant.id)}
+            variant="outline"
+            className="h-8 w-full text-xs text-red-600 border-red-200 hover:bg-red-50"
           >
-            {product.variants.map((variant) => (
-              <option key={variant.id} value={variant.id}>
-                {variant.name} - {variant.currency} {variant.price}
-              </option>
-            ))}
-          </select>
-
-          <button onClick={handleAddToCart} style={{ width: '100%', padding: '10px' }}>
-            Add to Cart
-          </button>
-        </>
-      ) : (
-        <p>No variants available</p>
-      )}
-    </div>
+            <Trash2 className="h-3 w-3 mr-1" />
+            Remove
+          </Button>
+        ) : (
+          <Button
+            onClick={() => addToCart(product, selectedVariant)}
+            className="h-8 w-full text-xs bg-green-700 hover:bg-green-800"
+          >
+            <ShoppingCart className="h-3 w-3 mr-1" />
+            Add
+          </Button>
+        )}
+      </div>
+    </Card>
   );
 }
 
