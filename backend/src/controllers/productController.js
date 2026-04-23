@@ -75,6 +75,38 @@ const updateProduct = asyncHandler(async (req, res) => {
   });
 });
 
+const updateProductStatus = asyncHandler(async (req, res) => {
+  const productId = Number(req.params.id);
+  const { isActive } = req.body;
+
+  const product = await prisma.product.update({
+    where: { id: productId },
+    data: { isActive: Boolean(isActive) },
+  });
+
+  res.json({
+    success: true,
+    message: "Product status updated",
+    data: product,
+  });
+});
+
+const updateVariantStatus = asyncHandler(async (req, res) => {
+  const variantId = Number(req.params.id);
+  const { isActive } = req.body;
+
+  const variant = await prisma.productVariant.update({
+    where: { id: variantId },
+    data: { isActive: Boolean(isActive) },
+  });
+
+  res.json({
+    success: true,
+    message: "Variant status updated",
+    data: variant,
+  });
+});
+
 const disableProduct = asyncHandler(async (req, res) => {
   const productId = Number(req.params.id);
 
@@ -163,4 +195,6 @@ module.exports = {
   disableProduct,
   getPublicProducts,
   getPublicProductById,
+  updateProductStatus,
+  updateVariantStatus,
 };

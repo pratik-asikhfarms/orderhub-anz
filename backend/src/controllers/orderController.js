@@ -18,7 +18,12 @@ const createOrder = asyncHandler(async (req, res) => {
     items,
   } = req.body;
 
-  const productIds = items.map((item) => item.productId);
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    throw new ApiError(400, "At least one item is required");
+  }
+
+  const productIds = items.map((item) => Number(item.productId));
+  const variantIds = items.map((item) => Number(item.variantId));
 
   const products = await prisma.product.findMany({
     where: {
@@ -27,8 +32,19 @@ const createOrder = asyncHandler(async (req, res) => {
     },
   });
 
-  if (products.length !== items.length) {
-    throw new ApiError(400, 'One or more products are invalid');
+  const variants = await prisma.productVariant.findMany({
+    where: {
+      id: { in: variantIds },
+      isActive: true,
+    },
+  });
+
+  if (products.length !== productIds.length) {
+    throw new ApiError(400, "One or more products are invalid");
+  }
+
+  if (variants.length !== variantIds.length) {
+    throw new ApiError(400, "One or more variants are invalid");
   }
 
   const productMap = {};
@@ -36,24 +52,52 @@ const createOrder = asyncHandler(async (req, res) => {
     productMap[product.id] = product;
   });
 
+  const variantMap = {};
+  variants.forEach((variant) => {
+    variantMap[variant.id] = variant;
+  });
+
   let totalAmount = 0;
 
   const orderItemsData = items.map((item) => {
-    const product = productMap[item.productId];
+    const productId = Number(item.productId);
+    const variantId = Number(item.variantId);
     const quantity = Number(item.quantity);
 
-    if (!quantity || quantity <= 0 || !Number.isInteger(quantity)) {
-      throw new ApiError(400, 'Invalid quantity');
+    const product = productMap[productId];
+    const variant = variantMap[variantId];
+
+    if (!product) {
+      throw new ApiError(400, `Invalid product: ${productId}`);
     }
 
-    const unitPrice = Number(product.price);
-    const lineTotal = unitPrice * quantity;
+    if (!variant) {
+      throw new ApiError(400, `Invalid variant: ${variantId}`);
+    }
 
+    if (variant.productId !== product.id) {
+      throw new ApiError(400, "Variant does not belong to the selected product");
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new ApiError(400, "Invalid quantity");
+    }
+
+    const unitPrice = Number(variant.price);
+
+    if (Number.isNaN(unitPrice)) {
+      throw new ApiError(400, "Invalid variant price");
+    }
+
+    const lineTotal = unitPrice * quantity;
     totalAmount += lineTotal;
 
     return {
       productId: product.id,
+      variantId: variant.id,
       productName: product.name,
+      variantName: variant.name,
+      sku: variant.sku,
       unitPrice,
       quantity,
       lineTotal,
@@ -70,7 +114,7 @@ const createOrder = asyncHandler(async (req, res) => {
       city,
       state: state || null,
       postalCode,
-      country: country || 'New Zealand',
+      country: country || "New Zealand",
       notes: notes || null,
       totalAmount,
       orderItems: {
@@ -94,7 +138,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: 'Order created successfully',
+    message: "Order created successfully",
     data: finalOrder,
   });
 });

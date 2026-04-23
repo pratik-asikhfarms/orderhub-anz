@@ -6,6 +6,8 @@ const {
   getAdminProducts,
   updateProduct,
   disableProduct,
+  updateProductStatus,
+  updateVariantStatus,
 } = require('../controllers/productController');
 
 const router = express.Router();
@@ -30,5 +32,7 @@ router.post('/products', validate(createProductSchema), createProduct);
 router.get('/products', getAdminProducts);
 router.put('/products/:id', validate(updateProductSchema), updateProduct);
 router.patch('/products/:id/disable', disableProduct);
+router.patch('/products/:id/status', updateProductStatus);
+router.patch('/products/variants/:id/status', updateVariantStatus);
 
 module.exports = router;

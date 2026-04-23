@@ -20,15 +20,6 @@ export const createProduct = async (payload) => {
   return response.data;
 };
 
-export const disableProduct = async (productId) => {
-  const response = await api.patch(
-    `/admin/products/${productId}/disable`,
-    {},
-    getAuthConfig()
-  );
-  return response.data;
-};
-
 export const createVariant = async (productId, payload) => {
   const response = await api.post(
     `/admin/products/${productId}/variants`,
@@ -37,11 +28,19 @@ export const createVariant = async (productId, payload) => {
   );
   return response.data;
 };
-
-export const disableVariant = async (variantId) => {
+export const updateProductStatus = async (productId, isActive) => {
   const response = await api.patch(
-    `/admin/variants/${variantId}/disable`,
-    {},
+    `/admin/products/${productId}/status`,
+    { isActive },
+    getAuthConfig()
+  );
+  return response.data;
+};
+
+export const updateVariantStatus = async (variantId, isActive) => {
+  const response = await api.patch(
+    `/admin/products/variants/${variantId}/status`,
+    { isActive },
     getAuthConfig()
   );
   return response.data;

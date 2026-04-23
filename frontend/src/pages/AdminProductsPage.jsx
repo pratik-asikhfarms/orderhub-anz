@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   createProduct,
   createVariant,
-  disableProduct,
-  disableVariant,
+  updateProductStatus,
+  updateVariantStatus,
   getAdminProducts,
 } from "@/services/adminProductService";
 
@@ -118,21 +118,21 @@ function AdminProductsPage() {
     }
   };
 
-  const handleDisableProduct = async (productId) => {
+  const handleToggleProductStatus = async (productId, isActive) => {
     try {
-      await disableProduct(productId);
+      await updateProductStatus(productId, isActive);
       fetchProducts();
     } catch (error) {
-      alert(error?.response?.data?.message || "Failed to disable product");
+      alert(error?.response?.data?.message || "Failed to update product status");
     }
   };
 
-  const handleDisableVariant = async (variantId) => {
+  const handleToggleVariantStatus = async (variantId, isActive) => {
     try {
-      await disableVariant(variantId);
+      await updateVariantStatus(variantId, isActive);
       fetchProducts();
     } catch (error) {
-      alert(error?.response?.data?.message || "Failed to disable variant");
+      alert(error?.response?.data?.message || "Failed to update variant status");
     }
   };
 
@@ -278,11 +278,14 @@ function AdminProductsPage() {
 
                           <Button
                             variant="outline"
-                            className="rounded-xl text-red-600 border-red-200 hover:bg-red-50"
-                            onClick={() => handleDisableProduct(product.id)}
+                            className={`rounded-xl ${product.isActive
+                              ? "text-red-600 border-red-200 hover:bg-red-50"
+                              : "text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                              }`}
+                            onClick={() => handleToggleProductStatus(product.id, !product.isActive)}
                           >
                             <Ban className="mr-2 h-4 w-4" />
-                            Disable
+                            {product.isActive ? "Disable" : "Enable"}
                           </Button>
                         </div>
 
@@ -327,12 +330,13 @@ function AdminProductsPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="rounded-lg text-red-600 border-red-200 hover:bg-red-50"
-                                      onClick={() =>
-                                        handleDisableVariant(variant.id)
-                                      }
+                                      className={`rounded-lg ${variant.isActive
+                                          ? "text-red-600 border-red-200 hover:bg-red-50"
+                                          : "text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                                        }`}
+                                      onClick={() => handleToggleVariantStatus(variant.id, !variant.isActive)}
                                     >
-                                      Disable
+                                      {variant.isActive ? "Disable" : "Enable"}
                                     </Button>
                                   </div>
                                 </div>
